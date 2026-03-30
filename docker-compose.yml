@@ -1,4 +1,4 @@
-version: "3" ## especifica a versão do docker-compose file
+version: "3.9" ## especifica a versão do docker-compose file
 
 services: ## Define um serviço
   app: ## nome do serviço
@@ -8,3 +8,27 @@ services: ## Define um serviço
       - "3000:3000" ## redirecionamento de porta quando chegar alguma requisição na porta 3000 chama o container na porta 3000
     volumes:
       - .:/usr/app ## monitoro a pasta atual . e envio as alterações para /usr/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+  
+  postgres:
+    image: postgres:latest ## imagem do postgres
+    environment:
+      POSTGRES_USER: todouser ## usuário do banco
+      POSTGRES_PASSWORD: todopass123 ## senha do banco
+      POSTGRES_DB: tododb ## nome do banco
+    ports:
+      - "5432:5432" ## redirecionamento de porta quando chegar alguma requisição na porta 5432 chama o container na porta 5432
+    volumes:
+      - ./src/db:/docker-entrypoint-initdb.d ## monitoro a pasta db e envio as alterações para /docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todouser -d tododb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
